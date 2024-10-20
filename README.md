@@ -1,10 +1,27 @@
 # Zendit - Secure Blockchain Transaction Verification
+Zend It ensures secure blockchain transactions by allowing users to verify details before signing, especially with Ledger hardware wallets. Using ZKPs and building on Polygon, Zend It offers transparent, risk-free interactions with smart contracts, putting users in full control.
 
 ## Overview
 
-Zendit is a powerful developer tool designed to enhance the security of blockchain transactions, particularly when interacting with smart contracts on Polygon and Unichain using a Ledger hardware wallet. By integrating zero-knowledge proof (ZKP) techniques, Zendit ensures that users can verify their transactions before signing, offering a seamless and secure interaction with blockchain systems.
+Zend It is a developer tool designed to provide secure and transparent blockchain transactions, especially when using Ledger hardware wallets. It enhances user confidence by offering a preview and then a transaction verification before signing, using a multi-step process that ensures accuracy and safety.
 
-Our project takes advantage of Ledger's **clear signing feature** and builds a zkApp on **Polygon** as part of our commitment to providing secure and transparent transaction verifications. Whether or not the contract is pre-approved by Ledger, Zendit offers robust verification options that put the user in full control.
+## Key Features 
+
+### Transaction Verification
+When a user initiates a transaction, such as a swap on Polygon or Unichain, Zend It introduces a verification step before signing. This prevents accidental or malicious transactions from proceeding without scrutiny.
+
+### Ledger Integration
+For users with a Ledger wallet, Zend It uses Ledger's **clear signing** feature. If the smart contract is pre-approved by Ledger, the transaction details are displayed directly on the Ledger device, allowing the user to review every aspect before approval.
+
+### EIP-712 For Everyone
+Zend It uses the EIP-712 standard to handle off-chain to on-chain communication securely using a zero knowledge virtual machine. This proof is returned to the user along with a clear message explaining the transaction’s intent. The smart contract's data is formatted in JSON, verified, and then presented in a clear, understandable format for the user.
+
+### Polygon zkApp
+Built as a zkApp on the Polygon blockchain, Zend It leverages the speed, scalability, and security of Polygon’s layer-2 solution, integrating zero-knowledge proofs directly into the transaction’s execution trace. We prove the transaction would occur on chain in a safe and private manner, off chain, using zkm.
+
+### Integration Beyond Ledger
+ZendIt is a Developer’s Tool for allowing users to verify ANY contract with or without ledger but you still get that strong EIP 712 Experience for any transaction your users interact with.
+
 
 ## How It Works
 
@@ -57,12 +74,31 @@ By combining these elements, Zendit offers a cutting-edge solution for developer
 ---
 
 #### Tech Stack
+
 - **Ledger Hardware Wallet** for secure transaction signing.
+- **Ledger API** To verify transaction details directly on the Ledger hardware wallet, ensuring that users can review                   the transaction securely before signing.
+- **Node.Js**, **Express** Our backend API. Used for handeling incoming requests from the frontend and to perform   
+                           critical transaction verifications.
+-**Ethers.js** For blockchain interactions, we used Ethers.js to communicate with smart contracts on Polygon and 
+               Unichain. This library simplifies contract calls, allowing us to fetch the contract’s ABI and decode 
+               input data.
+- **Zero-Knowledge Proofs (ZKP)** We used ZKM, to generate ZKPs, which ensures the transaction simulation results can 
+                                  be trusted and verified EIP712’s as well as their provable execution trace for all 
+                                  preceding transactions if the execution were to have taken place. For contracts that aren’t pre-approved by Ledger, Zend It will allow any contract to be both verifiable and clear!
 - **Polygon zkApp** for integrating zero-knowledge proofs on-chain.
 - **EIP-712** for structured transaction data.
-- **Typescript, JSON** for data formatting and communication with backend APIs.
+- **Temper.rs** For non-approved contracts, the backend simulates the transaction by recreating it in a safe 
+                environment. This simulation helps ensure the transaction will execute as expected without any 
+                unexpected consequences. 
+- **React**, **Typescript, JSON** for data formatting and communication with backend APIs.
 - **Etherscan** for contract verification and ABI retrieval.
+- **Polygon RPC**  for simulating the chain’s real time data utilizing an off chain ZKM.
 
+### **How It All Fits Together:**
+When a user initiates a transaction, Zend It kicks in to offer verification before signing. The frontend sends transaction data like the abi and 712 payload to the zkm backend, where it’s processed for Ledger’s clear signing and simulates transactions ahead of time in a verifiable manner. If the contract is approved by Ledger, users see the transaction details on their Ledger wallet screen. If not, the backend simulates the transaction, fetches the contract ABI from Etherscan, and decodes the transaction’s data. A ZKP is generated to prove the simulation was correct without revealing sensitive information. This information is then sent back to the frontend, where the user can review all details before deciding to sign the transaction. By giving the user a path to understand and an opportunity to review the transaction using the Clear Messaging Standard, detailed in the JSON response, that is formatted for the user to see the clear text version of their contract, in readable format, Zend It empowers users to make more informed, and thus safer and better decisions, prior to final verification.  
+
+## A Critical Discovery
+we can allow a ledger device to interact with unverified EIP 712 standard contacts that do not implement ERC7730,  Zend It funnels users into ERC7730 compliance. 
 ---
 
 **Join us** in bringing secure, transparent blockchain interactions to everyone through Zendit!
