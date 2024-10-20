@@ -4,7 +4,7 @@ import { ethers } from 'ethers'; // Ensure this import is correct
 import axios from 'axios';
 import './App.css'; // Import the CSS file for styles
 import zenditLogo from './zendit.png'; // Import the logo
-import DropdownMenu from './DropDownMenu'; // Import the DropdownMenu component
+import DropDownMenu from './DropDownMenu'; // Import the DropdownMenu component
 import AbiUploader from './abi'; // Import the AbiUploader component
 
 interface VerifyTransactionResponse {
@@ -165,7 +165,7 @@ const App: React.FC = () => {
       <h1 className="title">Zend It!</h1>
       <MyDApp />
       <AbiUploader /> {/* Add the ABI uploader here */}
-      <DropdownMenu /> {/* Add the dropdown menu here */}
+      <DropDownMenu /> {/* Add the dropdown menu here */}
     </div>
   );
 };
