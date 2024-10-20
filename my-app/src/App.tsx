@@ -13,13 +13,16 @@ const MyDApp: React.FC = () => {
   const [signer, setSigner] = useState<ethers.Signer | null>(null);
   const [pendingTransaction, setPendingTransaction] = useState<ethers.TransactionRequest | null>(null);
   const [clearSignMessage, setClearSignMessage] = useState<string | null>(null); // New state for clear sign message
+  const [walletAddress, setWalletAddress] = useState<string | null>(null); // New state for wallet address
 
   const initializeEthers = async () => {
     if ((window as any).ethereum) {
       const web3Provider = new ethers.BrowserProvider((window as any).ethereum); // Updated to use BrowserProvider
       await web3Provider.send('eth_requestAccounts', []);
       setProvider(web3Provider);
-      setSigner(await web3Provider.getSigner());
+      const signer = await web3Provider.getSigner(); // Store signer in a variable
+      setSigner(signer);
+      setWalletAddress(await signer.getAddress()); // Call getAddress on the signer variable
     } else {
       alert('Please install MetaMask!');
     }
@@ -135,17 +138,19 @@ const MyDApp: React.FC = () => {
   }, []);
 
   return (
-    <div className="dapp-container"> {/* Updated class for styling */}
-      <button className="button" onClick={initializeEthers}>Connect Wallet</button>
+    <div className="dapp-container">
+      <button className="button" onClick={initializeEthers}>
+        {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : 'Connect Wallet'} {/* Display truncated address */}
+      </button>
       <button className="button" onClick={initiateTransaction}>Initiate Transaction</button>
       {pendingTransaction && (
-        <div className="transaction-container"> {/* Updated class for styling */}
+        <div className="transaction-container">
           <button className="button" onClick={() => verifyTransaction(pendingTransaction)}>Verify Transaction</button>
           {clearSignMessage && <div><p>Clear Sign Message:</p><pre>{clearSignMessage}</pre></div>}
           <button className="button" onClick={signTransaction}>Sign and Send Transaction</button>
         </div>
       )}
-      <div className="highlight"></div> {/* Highlight area around cursor */}
+      <div className="highlight"></div>
     </div>
   );
 };
