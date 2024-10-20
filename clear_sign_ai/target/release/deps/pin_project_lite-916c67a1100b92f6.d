@@ -1,0 +1,7 @@
+/Users/dylankawalec/Desktop/dev/ETHGlobalSF2024/clear_sign_ai/target/release/deps/libpin_project_lite-916c67a1100b92f6.rmeta: /Users/dylankawalec/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pin-project-lite-0.2.14/src/lib.rs
+
+/Users/dylankawalec/Desktop/dev/ETHGlobalSF2024/clear_sign_ai/target/release/deps/libpin_project_lite-916c67a1100b92f6.rlib: /Users/dylankawalec/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pin-project-lite-0.2.14/src/lib.rs
+
+/Users/dylankawalec/Desktop/dev/ETHGlobalSF2024/clear_sign_ai/target/release/deps/pin_project_lite-916c67a1100b92f6.d: /Users/dylankawalec/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pin-project-lite-0.2.14/src/lib.rs
+
+/Users/dylankawalec/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pin-project-lite-0.2.14/src/lib.rs:

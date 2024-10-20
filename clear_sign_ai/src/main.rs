@@ -18,11 +18,18 @@ struct ClaudeRequest {
     max_tokens_to_sample: usize,
     temperature: f64,
     model: String,
+    stop_sequences: Vec<String>,
 }
 
 #[derive(Deserialize)]
 struct ClaudeResponse {
-    completion: String,
+    completion: Option<String>,
+    completion_reason: Option<String>,
+    stop: Option<String>,
+    model: Option<String>,
+    truncated: Option<bool>,
+    exception: Option<String>,
+    // Include other fields if necessary
 }
 
 #[post("/clear-sign-ai")]
@@ -178,28 +185,52 @@ async fn call_claude_api(prompt: &str, api_key: &str) -> Result<String, String> 
         "prompt": prompt,
         "max_tokens_to_sample": 3000,
         "temperature": 0.7,
-        "stop_sequences": ["\n\n"],
-        "model": "claude-3.5"
+        "model": "claude-2",
+        "stop_sequences": ["\n\n"]
     });
 
     let response = client
         .post("https://api.anthropic.com/v1/complete")
         .header("x-api-key", api_key)
+        .header("Content-Type", "application/json")
         .json(&claude_request)
         .send()
         .await
         .map_err(|e| format!("Failed to call Claude API: {}", e))?;
 
-    let response_json: serde_json::Value = response
-        .json()
+    let status = response.status();
+
+    let response_text = response
+        .text()
         .await
+        .map_err(|e| format!("Failed to read Claude API response: {}", e))?;
+
+    // Add the print statement here
+    println!("Claude API response: {}", response_text);
+
+    if !status.is_success() {
+        return Err(format!(
+            "Claude API returned error status {}: {}",
+            status, response_text
+        ));
+    }
+
+    let response_json: serde_json::Value = serde_json::from_str(&response_text)
         .map_err(|e| format!("Failed to parse Claude API response: {}", e))?;
 
-    // Extract the 'completion' field from the response
+    // Check for 'completion' field in the response
     if let Some(completion) = response_json["completion"].as_str() {
         Ok(completion.to_string())
     } else {
-        Err("Invalid response from Claude API: 'completion' field missing".to_string())
+        // Extract error message if available
+        let error_message = response_json["error"]["message"]
+            .as_str()
+            .unwrap_or("Unknown error from Claude API")
+            .to_string();
+        Err(format!(
+            "Invalid response from Claude API: 'completion' field missing. Error message: {}",
+            error_message
+        ))
     }
 }
 
@@ -211,7 +242,9 @@ async fn main() -> std::io::Result<()> {
     env_path.push(".env");
     from_filename(env_path).ok();
 
-
+    // Optionally, print environment variables to verify they are loaded
+    println!("Loaded CLAUDE_API_KEY: {:?}", env::var("CLAUDE_API_KEY"));
+    println!("Loaded ETHERSCAN_API_KEY: {:?}", env::var("ETHERSCAN_API_KEY"));
 
     HttpServer::new(|| App::new().service(clear_sign_ai_endpoint))
         .bind(("0.0.0.0", 8080))?
