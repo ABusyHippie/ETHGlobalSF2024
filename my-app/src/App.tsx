@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers'; // Ensure this import is correct
 import axios from 'axios';
 import './App.css'; // Import the CSS file for styles
+import zenditLogo from './zendit.png'; // Import the logo
+import DropdownMenu from './DropdownMenu'; // Import the DropdownMenu component
 
 interface VerifyTransactionResponse {
   clearSignMessage: string;
@@ -158,8 +160,10 @@ const MyDApp: React.FC = () => {
 const App: React.FC = () => {
   return (
     <div className="App">
+      <img src={zenditLogo} alt="Send It Logo" className="logo" />
       <h1 className="title">Zend It!</h1>
       <MyDApp />
+      <DropdownMenu /> {/* Add the dropdown menu here */}
     </div>
   );
 };
