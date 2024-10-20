@@ -59,16 +59,16 @@ body {
 }
 
 .title {
-  font-size: 64px; /* Increased font size for the title */
+  font-size: 90px; /* Increased font size for the title */
   font-weight: bold; /* Bold text */
-  color: #E6017B; 
+  color: #8347E5; 
   padding: 10px; /* Padding around the text */
   border-radius: 5px; /* Rounded corners */
   filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.7)); /* Drop shadow for better contrast */
 }
 
 .button {
-  background-color: #E6017B; /* Pink button */
+  background-color: #8347E5; 
   color: white;
   border: none;
   border-radius: 5px;
@@ -80,7 +80,7 @@ body {
 }
 
 .button:hover {
-  background-color: #ff4081; /* Lighter pink on hover */
+  background-color: #a576ef; 
   transform: scale(1.05); /* Scale up on hover */
 }
 
