@@ -11,6 +11,12 @@ struct InputData {
     abi: Option<serde_json::Value>,
 }
 
+struct FunctionInfo {
+    name: String,
+    inputs: Vec<(String, String)>, // (type, name)
+    outputs: Vec<String>,          // types
+}
+
 #[post("/clear-sign-ai")]
 async fn clear_sign_ai_endpoint(data: web::Json<InputData>) -> impl Responder {
     // Ensure CLAUDE_API_KEY is set
@@ -44,7 +50,7 @@ async fn clear_sign_ai_endpoint(data: web::Json<InputData>) -> impl Responder {
     let functions_info = extract_functions_info(&abi);
 
     // Create prompt for the AI
-    let prompt = create_prompt(&functions_info, &data.contract_address, &abi);
+    let prompt = create_prompt(&functions_info, &data.contract_address);
 
     // Call Claude API
     match call_claude_api(&prompt, &claude_api_key).await {
@@ -95,68 +101,86 @@ async fn fetch_abi_from_etherscan(contract_address: &str) -> Result<serde_json::
     }
 }
 
-fn extract_functions_info(abi: &serde_json::Value) -> Vec<String> {
+fn extract_functions_info(abi: &serde_json::Value) -> Vec<FunctionInfo> {
     let mut functions = Vec::new();
     let empty_vec = Vec::new();
 
     if let Some(items) = abi.as_array() {
         for item in items {
             if item["type"] == "function" {
-                let name = item["name"].as_str().unwrap_or("");
+                let name = item["name"].as_str().unwrap_or("").to_string();
                 let inputs = item["inputs"].as_array().unwrap_or(&empty_vec);
-                let params: Vec<String> = inputs
+                let params: Vec<(String, String)> = inputs
                     .iter()
                     .map(|input| {
-                        let typ = input["type"].as_str().unwrap_or("");
-                        let name = input["name"].as_str().unwrap_or("");
-                        format!("{} {}", typ, name)
+                        let typ = input["type"].as_str().unwrap_or("").to_string();
+                        let name = input["name"].as_str().unwrap_or("").to_string();
+                        (typ, name)
                     })
                     .collect();
-                let function_signature = format!("{}({})", name, params.join(", "));
-                functions.push(function_signature);
+                let outputs = item["outputs"].as_array().unwrap_or(&empty_vec);
+                let return_types: Vec<String> = outputs
+                    .iter()
+                    .map(|output| {
+                        let typ = output["type"].as_str().unwrap_or("").to_string();
+                        typ
+                    })
+                    .collect();
+                functions.push(FunctionInfo {
+                    name,
+                    inputs: params,
+                    outputs: return_types,
+                });
             }
         }
     }
     functions
 }
 
-fn create_prompt(
-    functions: &Vec<String>,
-    contract_address: &str,
-    abi: &serde_json::Value,
-) -> String {
-    let abi_str = serde_json::to_string_pretty(abi).unwrap_or_else(|_| "".to_string());
-
+fn create_prompt(functions: &Vec<FunctionInfo>, contract_address: &str) -> String {
     let mut prompt = String::new();
     prompt.push_str("You are an AI assistant that helps developers by generating detailed EIP-712 and EIP-7730 specifications and developer documentation for Ethereum smart contracts.\n\n");
-    prompt.push_str(
-        "Please provide a comprehensive Markdown document that includes the following sections:\n",
-    );
-    prompt.push_str(
-        "1. **Contract Overview**: A brief description of the smart contract at address ",
-    );
+    prompt.push_str("Please provide a comprehensive Markdown document for the smart contract at address ");
     prompt.push_str(contract_address);
-    prompt.push_str(".\n");
-    prompt.push_str("2. **ABI Specification**: An explanation of the ABI provided.\n");
-    prompt.push_str("3. **Function Descriptions**: Detailed descriptions of each function, including parameters and expected behavior.\n");
-    prompt.push_str("4. **EIP-712 Specification**: A complete EIP-712 specification for signing messages related to this contract.\n");
-    prompt.push_str("5. **EIP-7730 Specification**: A detailed EIP-7730 specification for clear signing of transactions.\n");
-    prompt.push_str("6. **Usage Examples**: Code snippets in Solidity and JavaScript demonstrating how to interact with the contract.\n");
-    prompt.push_str(
-        "7. **Security Considerations**: Any potential security risks or best practices.\n\n",
-    );
-    prompt.push_str("Here is the ABI and function list for reference:\n\n");
-    prompt.push_str("**ABI**:\n");
-    prompt.push_str("```json\n");
-    prompt.push_str(&abi_str);
-    prompt.push_str("\n```\n\n");
+    prompt.push_str(" that includes the following sections:\n");
+    prompt.push_str("1. **Contract Overview**: A brief description of the smart contract based on its functions.\n");
+    prompt.push_str("2. **Function Descriptions**: Detailed descriptions of each function provided below, including parameters, expected behavior, and any return values.\n");
+    prompt.push_str("3. **EIP-712 Specification**: A complete EIP-712 specification for signing messages related to this contract.\n");
+    prompt.push_str("4. **EIP-7730 Specification**: A detailed EIP-7730 specification for clear signing of transactions.\n");
+    prompt.push_str("5. **Usage Examples**: Code snippets in Solidity and JavaScript demonstrating how to interact with the contract.\n");
+    prompt.push_str("6. **Security Considerations**: Any potential security risks or best practices.\n\n");
+    prompt.push_str("Here are the functions with their details for reference:\n\n");
     prompt.push_str("**Functions**:\n");
+
     for func in functions {
-        prompt.push_str("- `");
-        prompt.push_str(func);
+        prompt.push_str("- Function Name: `");
+        prompt.push_str(&func.name);
         prompt.push_str("`\n");
+        prompt.push_str("  - Parameters:\n");
+        if func.inputs.is_empty() {
+            prompt.push_str("    - None\n");
+        } else {
+            for (typ, name) in &func.inputs {
+                prompt.push_str("    - `");
+                prompt.push_str(typ);
+                prompt.push_str(" ");
+                prompt.push_str(name);
+                prompt.push_str("`\n");
+            }
+        }
+        prompt.push_str("  - Returns:\n");
+        if func.outputs.is_empty() {
+            prompt.push_str("    - None\n");
+        } else {
+            for typ in &func.outputs {
+                prompt.push_str("    - `");
+                prompt.push_str(typ);
+                prompt.push_str("`\n");
+            }
+        }
     }
-    prompt.push_str("\nPlease ensure the Markdown document is well-formatted, with appropriate code blocks, headings, and bullet points. Use clear and concise language suitable for developers.\n");
+
+    prompt.push_str("\nPlease use the function details provided to generate the documentation. If any information is missing or unclear, please make reasonable assumptions and proceed. **Do not mention any lack of information in your response.**\n");
 
     prompt
 }
@@ -172,7 +196,7 @@ async fn call_claude_api(prompt: &str, api_key: &str) -> Result<String, String> 
     );
 
     let claude_request = json!({
-        "model": "claude-2", // Use a model you have access to
+        "model": "claude-2", // Replace with a model you have access to if necessary
         "prompt": formatted_prompt,
         "max_tokens_to_sample": 3000,
         "temperature": 0.7,
@@ -228,7 +252,7 @@ async fn call_claude_api(prompt: &str, api_key: &str) -> Result<String, String> 
 async fn main() -> std::io::Result<()> {
     // Load environment variables from the parent directory
     let mut env_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    env_path.pop(); // Move up one directory to ETHGlobalSF2024
+    env_path.pop(); // Move up one directory
     env_path.push(".env");
     from_filename(env_path).ok();
 
