@@ -1,41 +1,18 @@
 use actix_web::{post, web, App, HttpResponse, HttpServer, Responder};
 use dotenv::from_filename;
-use serde::{Deserialize, Serialize};
+use reqwest::Client;
 use serde_json::json;
 use std::env;
 use std::path::PathBuf;
-use reqwest::Client;
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 struct InputData {
     contract_address: String,
     abi: Option<serde_json::Value>,
 }
 
-#[derive(Serialize)]
-struct ClaudeRequest {
-    prompt: String,
-    max_tokens_to_sample: usize,
-    temperature: f64,
-    model: String,
-    stop_sequences: Vec<String>,
-}
-
-#[derive(Deserialize)]
-struct ClaudeResponse {
-    completion: Option<String>,
-    completion_reason: Option<String>,
-    stop: Option<String>,
-    model: Option<String>,
-    truncated: Option<bool>,
-    exception: Option<String>,
-    // Include other fields if necessary
-}
-
 #[post("/clear-sign-ai")]
 async fn clear_sign_ai_endpoint(data: web::Json<InputData>) -> impl Responder {
-    // Environment variables are already loaded in main(), no need to load them here
-
     // Ensure CLAUDE_API_KEY is set
     let claude_api_key = match env::var("CLAUDE_API_KEY") {
         Ok(key) => key,
@@ -152,8 +129,12 @@ fn create_prompt(
 
     let mut prompt = String::new();
     prompt.push_str("You are an AI assistant that helps developers by generating detailed EIP-712 and EIP-7730 specifications and developer documentation for Ethereum smart contracts.\n\n");
-    prompt.push_str("Please provide a comprehensive Markdown document that includes the following sections:\n");
-    prompt.push_str("1. **Contract Overview**: A brief description of the smart contract at address ");
+    prompt.push_str(
+        "Please provide a comprehensive Markdown document that includes the following sections:\n",
+    );
+    prompt.push_str(
+        "1. **Contract Overview**: A brief description of the smart contract at address ",
+    );
     prompt.push_str(contract_address);
     prompt.push_str(".\n");
     prompt.push_str("2. **ABI Specification**: An explanation of the ABI provided.\n");
@@ -161,7 +142,9 @@ fn create_prompt(
     prompt.push_str("4. **EIP-712 Specification**: A complete EIP-712 specification for signing messages related to this contract.\n");
     prompt.push_str("5. **EIP-7730 Specification**: A detailed EIP-7730 specification for clear signing of transactions.\n");
     prompt.push_str("6. **Usage Examples**: Code snippets in Solidity and JavaScript demonstrating how to interact with the contract.\n");
-    prompt.push_str("7. **Security Considerations**: Any potential security risks or best practices.\n\n");
+    prompt.push_str(
+        "7. **Security Considerations**: Any potential security risks or best practices.\n\n",
+    );
     prompt.push_str("Here is the ABI and function list for reference:\n\n");
     prompt.push_str("**ABI**:\n");
     prompt.push_str("```json\n");
@@ -181,18 +164,26 @@ fn create_prompt(
 async fn call_claude_api(prompt: &str, api_key: &str) -> Result<String, String> {
     let client = Client::new();
 
+    // Prepare the prompt with the required formatting
+    let formatted_prompt = format!(
+        "{}\n\nHuman: {}\n\nAssistant:",
+        "", // Optional system prompt can be placed here
+        prompt
+    );
+
     let claude_request = json!({
-        "prompt": prompt,
+        "model": "claude-2", // Use a model you have access to
+        "prompt": formatted_prompt,
         "max_tokens_to_sample": 3000,
         "temperature": 0.7,
-        "model": "claude-2",
-        "stop_sequences": ["\n\n"]
+        // Include other parameters as needed
     });
 
     let response = client
         .post("https://api.anthropic.com/v1/complete")
         .header("x-api-key", api_key)
         .header("Content-Type", "application/json")
+        .header("anthropic-version", "2023-06-01")
         .json(&claude_request)
         .send()
         .await
@@ -205,7 +196,7 @@ async fn call_claude_api(prompt: &str, api_key: &str) -> Result<String, String> 
         .await
         .map_err(|e| format!("Failed to read Claude API response: {}", e))?;
 
-    // Add the print statement here
+    // Print the response for debugging
     println!("Claude API response: {}", response_text);
 
     if !status.is_success() {
@@ -218,11 +209,10 @@ async fn call_claude_api(prompt: &str, api_key: &str) -> Result<String, String> 
     let response_json: serde_json::Value = serde_json::from_str(&response_text)
         .map_err(|e| format!("Failed to parse Claude API response: {}", e))?;
 
-    // Check for 'completion' field in the response
+    // Extract the assistant's reply from the response
     if let Some(completion) = response_json["completion"].as_str() {
-        Ok(completion.to_string())
+        Ok(completion.trim().to_string())
     } else {
-        // Extract error message if available
         let error_message = response_json["error"]["message"]
             .as_str()
             .unwrap_or("Unknown error from Claude API")
@@ -244,7 +234,10 @@ async fn main() -> std::io::Result<()> {
 
     // Optionally, print environment variables to verify they are loaded
     println!("Loaded CLAUDE_API_KEY: {:?}", env::var("CLAUDE_API_KEY"));
-    println!("Loaded ETHERSCAN_API_KEY: {:?}", env::var("ETHERSCAN_API_KEY"));
+    println!(
+        "Loaded ETHERSCAN_API_KEY: {:?}",
+        env::var("ETHERSCAN_API_KEY")
+    );
 
     HttpServer::new(|| App::new().service(clear_sign_ai_endpoint))
         .bind(("0.0.0.0", 8080))?
