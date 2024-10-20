@@ -14,9 +14,9 @@ const DropdownMenu: React.FC = () => {
       </button>
       {isOpen && (
         <div className="dropdown-content">
-          <a href="/link1" className="dropdown-item">Link 1</a>
-          <a href="/link2" className="dropdown-item">Link 2</a>
-          <a href="/link3" className="dropdown-item">Link 3</a>
+          <a href="/712" className="dropdown-item">Link 1</a>
+          <a href="/7730" className="dropdown-item">Link 2</a>
+          <a href="/ledger-live" className="dropdown-item">Link 3</a>
         </div>
       )}
     </div>
