@@ -14,8 +14,8 @@ const DropdownMenu: React.FC = () => {
       </button>
       {isOpen && (
         <div className="dropdown-content">
-          <a href="/712" className="dropdown-item">Link 1</a>
-          <a href="/7730" className="dropdown-item">Link 2</a>
+          <a href="https://developers.ledger.com/docs/clear-signing/eip712" className="dropdown-item">EIP 712 Docs</a>
+          <a href="https://developers.ledger.com/docs/clear-signing/erc7730" className="dropdown-item">ERC 7730 Docs</a>
           <a href="/ledger-live" className="dropdown-item">Link 3</a>
         </div>
       )}
