@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 
 import { ZENDIT_TKN_SEPOLIA } from '@/lib/addresses';
 import tokenABI from '@/lib/abi/zendit_token.json';
+import { RainbowButton } from '@/components/ui/rainbow-button';
 
 export default function TokenTransferPage() {
     const [activeTab, setActiveTab] = useState('safe');
@@ -21,6 +22,73 @@ export default function TokenTransferPage() {
     const [tokenAmount, setTokenAmount] = useState(0);
     const [abi, setAbi] = useState<string | null>(null);
     const { toast } = useToast();
+
+    const handleZenditTransfer = useCallback(async () => {
+        toast({
+            title: 'Sending Tokens',
+            description: (
+                <div>
+                    <p>You are about to interact with the sendTokens function. This function will:</p>
+                    <ul className="list-disc pl-4 mt-2">
+                        <li>
+                            Send <strong>{tokenAmount}</strong> tokens
+                        </li>
+                        <li>
+                            From the token contract at address:{' '}
+                            <strong>
+                                {tokenAddress.slice(0, 6)}...{tokenAddress.slice(-4)}
+                            </strong>
+                        </li>
+                        <li>
+                            To the recipient address:{' '}
+                            <strong>
+                                {recipientAddress.slice(0, 6)}...{recipientAddress.slice(-4)}
+                            </strong>
+                        </li>
+                    </ul>
+                    <p className="mt-2">Please confirm the transaction in your wallet when prompted.</p>
+                </div>
+            ),
+            duration: 10000, // 10 seconds
+        });
+
+        // try {
+        //     // Check if MetaMask is installed
+        //     if (typeof window.ethereum === 'undefined') {
+        //         throw new Error('Please install MetaMask to use this function');
+        //     }
+
+        //     // Request account access
+        //     await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        //     // Create a Web3Provider and get the signer
+        //     const provider = new ethers.providers.Web3Provider(window.ethereum);
+        //     const signer = provider.getSigner();
+
+        //     // Create a contract instance
+        //     const tokenContract = new ethers.Contract(tokenAddress, tokenABI, signer);
+
+        //     // Call the sendTokens function
+        //     const tx = await tokenContract.transfer(recipientAddress, ethers.utils.parseUnits(tokenAmount.toString(), 18));
+
+        //     // Wait for the transaction to be mined
+        //     const receipt = await tx.wait();
+
+        //     toast({
+        //         title: 'Transaction Successful',
+        //         description: `Tokens sent successfully! Transaction hash: ${receipt.transactionHash.slice(0, 10)}...`,
+        //         duration: 5000,
+        //     });
+        // } catch (error) {
+        //     console.error('Error sending tokens:', error);
+        //     toast({
+        //         title: 'Transaction Failed',
+        //         description: error instanceof Error ? error.message : 'An unknown error occurred',
+        //         variant: 'destructive',
+        //         duration: 5000,
+        //     });
+        // }
+    }, [tokenAddress, recipientAddress, tokenAmount]);
 
     const handleMint = async () => {
         try {
@@ -101,7 +169,8 @@ export default function TokenTransferPage() {
                     <Card className="w-full ">
                         <CardHeader>
                             <CardTitle>
-                                <HyperText className="text-2xl font-bold text-black dark:text-white" text="Safe Token Transfer" />
+                                {/* <HyperText className="text-2xl font-bold text-black dark:text-white" text="Safe Token Transfer" /> */}
+                                <span className="text-2xl font-bold text-black dark:text-white">Safe Token Transfer</span>
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -140,8 +209,7 @@ export default function TokenTransferPage() {
                                     </div>
                                 </div>
                                 <div className="flex space-x-2">
-                                    <Button variant="outline">Approve</Button>
-                                    <Button>Submit</Button>
+                                    <Button onClick={handleZenditTransfer}>Zend It</Button>
                                 </div>
                             </form>
                         </CardContent>
@@ -151,7 +219,8 @@ export default function TokenTransferPage() {
                     <Card className="w-full ">
                         <CardHeader>
                             <CardTitle>
-                                <HyperText className="text-2xl font-bold text-black dark:text-white" text="Malicious Token Transfer" />
+                                {/* <HyperText className="text-2xl font-bold text-black dark:text-white" text="Malicious Token Transfer" /> */}
+                                <span className="text-2xl font-bold text-black dark:text-white">Malicious Token Transfer</span>
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -195,8 +264,9 @@ export default function TokenTransferPage() {
                                     </div>
                                 </div>
                                 <div className="flex space-x-2">
-                                    <Button variant="outline">Approve</Button>
-                                    <Button>Submit</Button>
+                                    <Button onClick={handleZenditTransfer}>
+                                        <span className='className="text-white bg-black"'>Zend It</span>
+                                    </Button>
                                 </div>
                             </form>
                         </CardContent>
@@ -207,7 +277,8 @@ export default function TokenTransferPage() {
             <Card className="w-full mt-8">
                 <CardHeader>
                     <CardTitle>
-                        <HyperText className="text-2xl font-bold text-black dark:text-white" text="Demo Token" />
+                        {/* <HyperText className="text-2xl font-bold text-black dark:text-white" text="Demo Token" /> */}
+                        <span className="text-2xl font-bold text-black dark:text-white">Demo Token</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
