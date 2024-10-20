@@ -1,4 +1,5 @@
-*LIVE LINK* SUPER NECESSARY
+Live Demo Link - TO ADD
+
 # Zendit - Secure Blockchain Transaction Verification
 Zend It ensures secure blockchain transactions by allowing users to verify details before signing, especially with Ledger hardware wallets. Using ZKPs and building on Polygon, Zend It offers transparent, risk-free interactions with smart contracts, putting users in full control.
 
