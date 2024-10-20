@@ -50,7 +50,7 @@ async fn clear_sign_ai_endpoint(data: web::Json<InputData>) -> impl Responder {
     let functions_info = extract_functions_info(&abi);
 
     // Create prompt for the AI
-    let prompt = create_prompt(&functions_info, &data.contract_address);
+    let prompt = create_prompt(&functions_info, &data.contract_address, &abi);
 
     // Call Claude API
     match call_claude_api(&prompt, &claude_api_key).await {
@@ -137,18 +137,22 @@ fn extract_functions_info(abi: &serde_json::Value) -> Vec<FunctionInfo> {
     functions
 }
 
-fn create_prompt(functions: &Vec<FunctionInfo>, contract_address: &str) -> String {
+fn create_prompt(
+    functions: &Vec<FunctionInfo>,
+    contract_address: &str,
+    abi: &serde_json::Value,
+) -> String {
+    let abi_str = serde_json::to_string_pretty(abi).unwrap_or_else(|_| "".to_string());
+
     let mut prompt = String::new();
-    prompt.push_str("You are an AI assistant that helps developers by generating detailed EIP-712 and EIP-7730 specifications and developer documentation for Ethereum smart contracts.\n\n");
+    prompt.push_str("You are an AI assistant that helps developers by generating detailed documentation for Ethereum smart contracts.\n\n");
     prompt.push_str("Please provide a comprehensive Markdown document for the smart contract at address ");
     prompt.push_str(contract_address);
     prompt.push_str(" that includes the following sections:\n");
     prompt.push_str("1. **Contract Overview**: A brief description of the smart contract based on its functions.\n");
     prompt.push_str("2. **Function Descriptions**: Detailed descriptions of each function provided below, including parameters, expected behavior, and any return values.\n");
-    prompt.push_str("3. **EIP-712 Specification**: A complete EIP-712 specification for signing messages related to this contract.\n");
-    prompt.push_str("4. **EIP-7730 Specification**: A detailed EIP-7730 specification for clear signing of transactions.\n");
-    prompt.push_str("5. **Usage Examples**: Code snippets in Solidity and JavaScript demonstrating how to interact with the contract.\n");
-    prompt.push_str("6. **Security Considerations**: Any potential security risks or best practices.\n\n");
+    prompt.push_str("3. **Usage Examples**: Code snippets in Solidity and JavaScript demonstrating how to interact with the contract.\n");
+    prompt.push_str("4. **Security Considerations**: Any potential security risks or best practices.\n\n");
     prompt.push_str("Here are the functions with their details for reference:\n\n");
     prompt.push_str("**Functions**:\n");
 
@@ -180,7 +184,11 @@ fn create_prompt(functions: &Vec<FunctionInfo>, contract_address: &str) -> Strin
         }
     }
 
-    prompt.push_str("\nPlease use the function details provided to generate the documentation. If any information is missing or unclear, please make reasonable assumptions and proceed. **Do not mention any lack of information in your response.**\n");
+    prompt.push_str("\nHere is the ABI of the contract for reference:\n\n");
+    prompt.push_str("```json\n");
+    prompt.push_str(&abi_str);
+    prompt.push_str("\n```\n\n");
+    prompt.push_str("Please use the ABI and function details provided to generate the documentation. If any information is missing or unclear, please make reasonable assumptions and proceed. **Do not mention any lack of information in your response.**\n");
 
     prompt
 }
